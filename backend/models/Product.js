@@ -5,10 +5,12 @@ const productSchema = new mongoose.Schema(
     title: {
       type: String,
       required: true,
+      trim: true,
     },
 
     description: {
       type: String,
+      trim: true,
     },
 
     price: {
@@ -23,25 +25,51 @@ const productSchema = new mongoose.Schema(
 
     gender: {
       type: String,
-      enum: ["men", "women", "unisex"],
       required: true,
+      enum: ["women", "men", "unisex"],
     },
 
     category: {
       type: String,
-      default: "unknown",
+      required: true,
     },
 
-    images: [
-      {
-        type: String,
-      },
-    ],
+    images: {
+      type: [String],
+      default: [],
+    },
 
     seller: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+    },
+
+    // ===============================
+    // ✅ BIDDING SYSTEM
+    // ===============================
+
+    biddingEnabled: {
+      type: Boolean,
+      default: false,
+    },
+
+    highestBid: {
+      type: Number,
+      default: 0,
+    },
+
+    selectedBidder: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    // ===============================
+
+    isSold: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }

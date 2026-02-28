@@ -1,120 +1,153 @@
 import { useState } from "react";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 function Stylist() {
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
-  const [mood, setMood] = useState("");
-  const [occasion, setOccasion] = useState("");
-  const [color, setColor] = useState("");
-  const [result, setResult] = useState("");
+  // ======================
+  // SEND MESSAGE
+  // ======================
+  const askStylist = async () => {
+    const text = input.trim();
+    if (!text || loading) return;
 
-  const generateStyle = () => {
-    if (!mood || !occasion || !color) {
-      setResult("Please select all options ✨");
-      return;
+    setMessages((prev) => [
+      ...prev,
+      { type: "user", text },
+    ]);
+
+    setInput("");
+    setLoading(true);
+
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/api/products/stylist",
+        { message: text }
+      );
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          type: "bot",
+          text: res.data.text,
+          products: res.data.products || [],
+        },
+      ]);
+    } catch (err) {
+      console.error("Stylist error:", err);
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          type: "bot",
+          text: "Oops, something went wrong. Try again.",
+          products: [],
+          error: true,
+        },
+      ]);
+    } finally {
+      setLoading(false);
     }
-
-    setResult(
-      `For a ${occasion.toLowerCase()} look, we recommend a ${color.toLowerCase()} outfit with a ${mood.toLowerCase()} silhouette. 
-This combination flatters your vibe while keeping things sustainable and effortlessly stylish. 🌷✨`
-    );
   };
 
   return (
-    <div className="min-h-screen bg-cream px-6 py-28 text-cocoa">
-      <div className="max-w-3xl mx-auto">
-
-        {/* 🌸 HEADER */}
-        <h1 className="text-5xl font-extrabold mb-4 text-center">
-          Your <span className="text-rose">AI Stylist</span>
+    <div className="min-h-screen bg-cream px-6 py-24">
+      <div className="max-w-5xl mx-auto">
+        <h1 className="text-4xl font-bold mb-6">
+          AI Stylist ✨
         </h1>
-        <p className="text-center text-cocoa/70 mb-16">
-          Let AI curate a look just for you ✨
-        </p>
 
-        {/* 🌷 STYLIST CARD */}
-        <div className="bg-softpink rounded-[2.5rem]
-                        shadow-[0_30px_60px_rgba(0,0,0,0.08)]
-                        p-10 space-y-6">
-
-          {/* MOOD */}
-          <select
-            value={mood}
-            onChange={(e) => setMood(e.target.value)}
-            className="w-full px-6 py-4 rounded-full
-                       bg-cream border border-blush
-                       focus:outline-none focus:ring-2
-                       focus:ring-rose"
-          >
-            <option value="">Choose your vibe</option>
-            <option>Soft & Feminine</option>
-            <option>Minimal & Clean</option>
-            <option>Bold & Confident</option>
-            <option>Casual & Cozy</option>
-          </select>
-
-          {/* OCCASION */}
-          <select
-            value={occasion}
-            onChange={(e) => setOccasion(e.target.value)}
-            className="w-full px-6 py-4 rounded-full
-                       bg-cream border border-blush
-                       focus:outline-none focus:ring-2
-                       focus:ring-rose"
-          >
-            <option value="">Select an occasion</option>
-            <option>Everyday Wear</option>
-            <option>College / Work</option>
-            <option>Brunch / Outing</option>
-            <option>Evening Event</option>
-          </select>
-
-          {/* COLOR */}
-          <select
-            value={color}
-            onChange={(e) => setColor(e.target.value)}
-            className="w-full px-6 py-4 rounded-full
-                       bg-cream border border-blush
-                       focus:outline-none focus:ring-2
-                       focus:ring-rose"
-          >
-            <option value="">Preferred color palette</option>
-            <option>Neutral tones</option>
-            <option>Soft pastels</option>
-            <option>Bold colors</option>
-            <option>Monochrome</option>
-          </select>
-
-          {/* BUTTON */}
-          <button
-            onClick={generateStyle}
-            className="w-full py-4 rounded-full
-                       bg-rose text-white
-                       font-semibold text-lg
-                       hover:opacity-90 transition"
-          >
-            Style Me ✨
-          </button>
-
-          {/* RESULT */}
-          {result && (
-            <div className="mt-8 bg-cream rounded-3xl p-6">
-              <p className="text-cocoa leading-relaxed">
-                {result}
-              </p>
-
-              <button
-                onClick={() => navigate("/buy")}
-                className="mt-6 px-6 py-3 rounded-full
-                           bg-blush text-cocoa
-                           hover:bg-rose hover:text-white
-                           transition"
-              >
-                Shop This Look 💕
-              </button>
-            </div>
+        {/* CHAT AREA */}
+        <div className="bg-white rounded-3xl shadow p-6 h-[60vh] overflow-y-auto space-y-6">
+          {messages.length === 0 && (
+            <p className="text-cocoa/60">
+              Ask things like:
+              <br />• Outfit for college
+              <br />• Party outfit ideas
+              <br />• Casual summer clothes
+            </p>
           )}
+
+          {messages.map((msg, i) =>
+            msg.type === "user" ? (
+              <div key={i} className="text-right">
+                <div className="inline-block bg-rose text-white px-4 py-2 rounded-2xl">
+                  {msg.text}
+                </div>
+              </div>
+            ) : (
+              <div key={i} className="space-y-3">
+                {/* Bot text */}
+                <div className="inline-block bg-gray-100 px-4 py-3 rounded-2xl max-w-[80%]">
+                  {msg.text}
+                </div>
+
+                {/* Optional products */}
+                {msg.products?.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {msg.products.map((item) => (
+                      <div
+                        key={item._id}
+                        onClick={() =>
+                          navigate(`/product/${item._id}`)
+                        }
+                        className="cursor-pointer bg-softpink rounded-xl p-3 shadow hover:shadow-lg"
+                      >
+                        {item.images?.length ? (
+                          <img
+                            src={`http://localhost:5000/uploads/${item.images[0]}`}
+                            alt={item.title}
+                            className="h-32 w-full object-cover rounded"
+                          />
+                        ) : (
+                          <div className="h-32 bg-blush rounded" />
+                        )}
+
+                        <p className="mt-2 font-semibold text-sm">
+                          {item.title}
+                        </p>
+
+                        <p className="text-rose font-bold text-sm">
+                          ₹{item.price}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          )}
+
+          {loading && (
+            <p className="text-cocoa/60">
+              Stylist thinking...
+            </p>
+          )}
+        </div>
+
+        {/* INPUT */}
+        <div className="flex gap-4 mt-6">
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ask stylist..."
+            className="flex-1 p-4 border rounded-full"
+            onKeyDown={(e) =>
+              e.key === "Enter" && askStylist()
+            }
+          />
+
+          <button
+            onClick={askStylist}
+            className="px-6 bg-rose text-white rounded-full"
+          >
+            Send
+          </button>
         </div>
       </div>
     </div>

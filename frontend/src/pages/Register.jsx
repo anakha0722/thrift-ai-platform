@@ -1,74 +1,72 @@
 import { useState } from "react";
 import axios from "axios";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
-function Login() {
+function Register() {
   const navigate = useNavigate();
-  const location = useLocation();
 
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState("buyer"); // 1️⃣ role
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleLogin = async (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
+      // register user
       const res = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        { email, password }
+        "http://localhost:5000/api/auth/register",
+        { name, email, password, role }
       );
 
-      // ✅ Save token
+      // 2️⃣ AUTO LOGIN AFTER SIGNUP
       localStorage.setItem("token", res.data.token);
 
-      // ✅ Save full user object
-      localStorage.setItem(
-        "user",
-        JSON.stringify(res.data.user)
-      );
-
-      const user = res.data.user;
-
-      // 🔥 Handle redirect correctly
-      const from = location.state?.from?.pathname;
-
-      if (from) {
-        navigate(from, { replace: true });
-      } else {
-        // Default redirect based on role
-        if (user.role === "seller") {
-          navigate("/sell", { replace: true });
-        } else {
-          navigate("/buy", { replace: true });
-        }
-      }
-
+      // redirect to buy page
+      navigate("/buy");
     } catch (err) {
-      setError("Invalid email or password");
+      setError("Registration failed. Try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-cream flex items-center justify-center px-6">
+    // 3️⃣ FADE ANIMATION
+    <div className="min-h-screen bg-cream flex items-center justify-center px-6
+                    animate-fadeIn">
       <div
         className="w-full max-w-md bg-softpink rounded-[2.5rem]
                    shadow-[0_30px_60px_rgba(0,0,0,0.08)]
                    p-10"
       >
+        {/* 🌸 BRAND */}
         <h1 className="text-4xl font-extrabold text-center mb-2">
           Re<span className="text-rose">Wear</span>
         </h1>
         <p className="text-center text-cocoa/70 mb-10">
-          Welcome back ✨
+          Create your account ✨
         </p>
 
-        <form onSubmit={handleLogin} className="space-y-5">
+        {/* 🌷 FORM */}
+        <form onSubmit={handleRegister} className="space-y-5">
+          <input
+            type="text"
+            placeholder="Full name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full px-5 py-4 rounded-full
+                       bg-cream border border-blush
+                       focus:outline-none focus:ring-2
+                       focus:ring-rose text-cocoa"
+            required
+          />
+
           <input
             type="email"
             placeholder="Email address"
@@ -93,6 +91,19 @@ function Login() {
             required
           />
 
+          {/* 1️⃣ ROLE SELECT */}
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            className="w-full px-5 py-4 rounded-full
+                       bg-cream border border-blush
+                       focus:outline-none focus:ring-2
+                       focus:ring-rose text-cocoa"
+          >
+            <option value="buyer">Buyer</option>
+            <option value="seller">Seller</option>
+          </select>
+
           {error && (
             <p className="text-sm text-center text-red-500">
               {error}
@@ -106,17 +117,18 @@ function Login() {
                        bg-rose text-white font-semibold
                        text-lg hover:opacity-90 transition"
           >
-            {loading ? "Signing you in…" : "Login ✨"}
+            {loading ? "Creating account…" : "Sign Up ✨"}
           </button>
         </form>
 
+        {/* 🌷 FOOTER */}
         <p className="text-center text-sm text-cocoa/60 mt-8">
-          New here?{" "}
+          Already have an account?{" "}
           <span
-            onClick={() => navigate("/register")}
+            onClick={() => navigate("/login")}
             className="text-rose cursor-pointer hover:underline"
           >
-            Create an account
+            Login
           </span>
         </p>
       </div>
@@ -124,4 +136,4 @@ function Login() {
   );
 }
 
-export default Login;
+export default Register;
