@@ -26,7 +26,7 @@ function Register() {
     try {
       // register user
       const res = await axios.post(
-        "http://localhost:5000/api/auth/register",
+        "https://thrift-ai-platform.vercel.app/api/auth/register",
         { name, email, password, role }
       );
 

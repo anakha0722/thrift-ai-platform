@@ -21,7 +21,7 @@ function Orders() {
   const loadOrders = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/orders/my-orders",
+        "https://thrift-ai-platform.vercel.app/api/orders/my-orders",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setOrders(res.data);
@@ -33,7 +33,7 @@ function Orders() {
   const handleConfirm = async (orderId) => {
     try {
       await axios.put(
-        `http://localhost:5000/api/orders/confirm/${orderId}`,
+        `https://thrift-ai-platform.vercel.app/api/orders/confirm/${orderId}`,
         form,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -50,7 +50,7 @@ function Orders() {
   const handleCancel = async (orderId) => {
     try {
       await axios.put(
-        `http://localhost:5000/api/orders/cancel/${orderId}`,
+        `https://thrift-ai-platform.vercel.app/api/orders/cancel/${orderId}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -117,11 +117,10 @@ function Orders() {
                     {steps.map((step, index) => (
                       <div key={step} className="flex-1 text-center">
                         <div
-                          className={`h-2 mb-2 rounded-full ${
-                            index <= progress
+                          className={`h-2 mb-2 rounded-full ${index <= progress
                               ? "bg-rose"
                               : "bg-gray-300"
-                          }`}
+                            }`}
                         />
                         <p
                           className={
@@ -145,7 +144,7 @@ function Orders() {
                       >
                         {item.product.images?.length ? (
                           <img
-                            src={`http://localhost:5000/uploads/${item.product.images[0]}`}
+                            src={`https://thrift-ai-platform.vercel.app/uploads/${item.product.images[0]}`}
                             alt={item.product.title}
                             className="w-16 h-16 rounded-xl object-cover"
                           />
@@ -158,12 +157,12 @@ function Orders() {
                             {item.product.title}
                           </p>
                           <p className="text-sm text-cocoa/60">
-  Sold by: {item.product.seller?.name}
-</p>
+                            Sold by: {item.product.seller?.name}
+                          </p>
 
-<p className="text-sm text-cocoa/60">
-  Contact: {item.product.seller?.email}
-</p>
+                          <p className="text-sm text-cocoa/60">
+                            Contact: {item.product.seller?.email}
+                          </p>
                           <p className="text-sm text-cocoa/60">
                             Qty: {item.quantity}
                           </p>
@@ -198,13 +197,13 @@ function Orders() {
 
                       {(order.status === "Awaiting Confirmation" ||
                         order.status === "Placed") && (
-                        <button
-                          onClick={() => handleCancel(order._id)}
-                          className="bg-red-500 text-white px-4 py-2 rounded-full text-sm"
-                        >
-                          Cancel Order
-                        </button>
-                      )}
+                          <button
+                            onClick={() => handleCancel(order._id)}
+                            className="bg-red-500 text-white px-4 py-2 rounded-full text-sm"
+                          >
+                            Cancel Order
+                          </button>
+                        )}
                     </div>
                   </div>
 

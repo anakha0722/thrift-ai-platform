@@ -14,7 +14,7 @@ function Wishlist() {
     const loadWishlist = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/wishlist",
+          "https://thrift-ai-platform.vercel.app/api/wishlist",
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
@@ -39,7 +39,7 @@ function Wishlist() {
   const handleAddToCart = async (productId) => {
     try {
       await axios.post(
-        "http://localhost:5000/api/cart/add",
+        "https://thrift-ai-platform.vercel.app/api/cart/add",
         { productId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -55,7 +55,7 @@ function Wishlist() {
   const handleRemove = async (productId) => {
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/wishlist/remove",
+        "https://thrift-ai-platform.vercel.app/api/wishlist/remove",
         { productId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -114,7 +114,7 @@ function Wishlist() {
               <img
                 src={
                   product.images?.length
-                    ? `http://localhost:5000/uploads/${product.images[0]}`
+                    ? `https://thrift-ai-platform.vercel.app/uploads/${product.images[0]}`
                     : "/placeholder.png"
                 }
                 alt={product.title}

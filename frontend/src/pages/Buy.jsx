@@ -30,7 +30,7 @@ function Buy() {
     const loadWishlist = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/wishlist",
+          "https://thrift-ai-platform.vercel.app/api/wishlist",
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
@@ -62,7 +62,7 @@ function Buy() {
         setLoadingProducts(true);
 
         const res = await axios.get(
-          "http://localhost:5000/api/products"
+          "https://thrift-ai-platform.vercel.app/api/products"
         );
 
         setProducts(res.data || []);
@@ -100,10 +100,10 @@ function Buy() {
     if (maxPrice)
       temp = temp.filter(p => p.price <= Number(maxPrice));
 
-    if (sort === "low") temp.sort((a,b)=>a.price-b.price);
-    if (sort === "high") temp.sort((a,b)=>b.price-a.price);
+    if (sort === "low") temp.sort((a, b) => a.price - b.price);
+    if (sort === "high") temp.sort((a, b) => b.price - a.price);
     if (sort === "new")
-      temp.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+      temp.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     setFilteredProducts(temp);
   }, [search, category, size, maxPrice, products, sort]);
@@ -170,29 +170,29 @@ function Buy() {
       return;
     }
 
-// ================= SERVER CART =================
-try {
+    // ================= SERVER CART =================
+    try {
 
-  const res = await axios.post(
-    "http://localhost:5000/api/cart/add",
-    { productId: product._id },
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
+      const res = await axios.post(
+        "https://thrift-ai-platform.vercel.app/api/cart/add",
+        { productId: product._id },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-  alert(res.data?.message || "Added to cart");
+      alert(res.data?.message || "Added to cart");
 
-} catch (err) {
+    } catch (err) {
 
-  if (err.response?.data?.message) {
-    alert(err.response.data.message);
-  } else {
-    alert("Failed to add to cart");
-  }
+      if (err.response?.data?.message) {
+        alert(err.response.data.message);
+      } else {
+        alert("Failed to add to cart");
+      }
 
-  console.error("Cart error:", err);
-}
+      console.error("Cart error:", err);
+    }
 
-setAddingId(null);
+    setAddingId(null);
   };
 
   const getProductImage = (product) => {
@@ -218,7 +218,7 @@ setAddingId(null);
       .replace(/^(\/)?uploads\//, "")
       .replace(/^\/+/, "");
 
-    return `http://localhost:5000/uploads/${cleanPath}`;
+    return `https://thrift-ai-platform.vercel.app/uploads/${cleanPath}`;
   };
 
   return (
@@ -226,9 +226,9 @@ setAddingId(null);
       <Hero />
 
       <div
-  id="products"
-  className="max-w-7xl mx-auto px-6 py-12 flex gap-10"
->
+        id="products"
+        className="max-w-7xl mx-auto px-6 py-12 flex gap-10"
+      >
 
         {/* FILTER SIDEBAR */}
         <div className="w-64 space-y-6">
@@ -237,7 +237,7 @@ setAddingId(null);
             <label className="block mb-2 font-semibold">Category</label>
             <select
               value={category}
-              onChange={(e)=>setCategory(e.target.value)}
+              onChange={(e) => setCategory(e.target.value)}
               className="w-full p-2 border rounded"
             >
               <option value="">All</option>
@@ -252,7 +252,7 @@ setAddingId(null);
             <label className="block mb-2 font-semibold">Size</label>
             <select
               value={size}
-              onChange={(e)=>setSize(e.target.value)}
+              onChange={(e) => setSize(e.target.value)}
               className="w-full p-2 border rounded"
             >
               <option value="">All</option>
@@ -268,7 +268,7 @@ setAddingId(null);
             <label className="block mb-2 font-semibold">Max Price</label>
             <select
               value={maxPrice}
-              onChange={(e)=>setMaxPrice(e.target.value)}
+              onChange={(e) => setMaxPrice(e.target.value)}
               className="w-full p-2 border rounded"
             >
               <option value="">No Limit</option>
@@ -320,7 +320,7 @@ setAddingId(null);
                 <div
                   key={product._id}
                   className="relative bg-softpink rounded-xl overflow-hidden shadow cursor-pointer"
-                  onClick={()=> {
+                  onClick={() => {
                     if (!isOutOfStock)
                       navigate(`/product/${product._id}`);
                   }}
@@ -338,9 +338,8 @@ setAddingId(null);
                         e.currentTarget.src = "/placeholder.png";
                       }
                     }}
-                    className={`w-full h-60 object-cover ${
-                      isOutOfStock ? "opacity-60" : ""
-                    }`}
+                    className={`w-full h-60 object-cover ${isOutOfStock ? "opacity-60" : ""
+                      }`}
                     alt=""
                   />
 
@@ -351,22 +350,21 @@ setAddingId(null);
                   </div>
 
                   <button
-                    onClick={(e)=>{
+                    onClick={(e) => {
                       e.stopPropagation();
                       handleAddToCart(product);
                     }}
                     disabled={isOutOfStock || addingId === product._id}
-                    className={`w-full py-3 text-white ${
-                      isOutOfStock || addingId === product._id
+                    className={`w-full py-3 text-white ${isOutOfStock || addingId === product._id
                         ? "bg-gray-400 cursor-not-allowed"
                         : "bg-rose"
-                    }`}
+                      }`}
                   >
                     {isOutOfStock
                       ? "Sold Out"
                       : addingId === product._id
-                      ? "Adding..."
-                      : "Add to Cart"}
+                        ? "Adding..."
+                        : "Add to Cart"}
                   </button>
 
                 </div>

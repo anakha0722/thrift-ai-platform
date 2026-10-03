@@ -54,7 +54,7 @@ function Sell() {
 
     try {
       await axios.post(
-        "http://localhost:5000/api/products/upload",
+        "https://thrift-ai-platform.vercel.app/api/products/upload",
         data,
         {
           headers: {
@@ -119,33 +119,33 @@ function Sell() {
         />
 
         {/* GENDER DROPDOWN */}
-       <select
-  name="gender"
-  value={form.gender}
-  onChange={handleChange}
-  required
-  className="w-full mb-4 p-4 rounded-full"
->
-  <option value="">Select Gender</option>
-  <option value="men">Men</option>
-  <option value="women">Women</option>
-  <option value="unisex">Unisex</option>
-</select>
+        <select
+          name="gender"
+          value={form.gender}
+          onChange={handleChange}
+          required
+          className="w-full mb-4 p-4 rounded-full"
+        >
+          <option value="">Select Gender</option>
+          <option value="men">Men</option>
+          <option value="women">Women</option>
+          <option value="unisex">Unisex</option>
+        </select>
 
         {/* CATEGORY DROPDOWN */}
-       <select
-  name="category"
-  value={form.category}
-  onChange={handleChange}
-  required
-  className="w-full mb-4 p-4 rounded-full"
->
-  <option value="">Select Category</option>
-  <option value="topwear">Topwear</option>
-  <option value="bottomwear">Bottomwear</option>
-  <option value="dress">Dress</option>
-  <option value="accessories">Accessories</option>
-</select>
+        <select
+          name="category"
+          value={form.category}
+          onChange={handleChange}
+          required
+          className="w-full mb-4 p-4 rounded-full"
+        >
+          <option value="">Select Category</option>
+          <option value="topwear">Topwear</option>
+          <option value="bottomwear">Bottomwear</option>
+          <option value="dress">Dress</option>
+          <option value="accessories">Accessories</option>
+        </select>
 
         {/* SIZE DROPDOWN */}
         <select

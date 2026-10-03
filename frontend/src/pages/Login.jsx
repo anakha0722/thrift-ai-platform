@@ -24,7 +24,7 @@ function Login() {
 
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/auth/login",
+        "https://thrift-ai-platform.vercel.app/api/auth/login",
         { email, password }
       );
 
@@ -39,25 +39,25 @@ function Login() {
 
       const user = res.data.user;
       // ================= MERGE CART =================
-const token = res.data.token;
+      const token = res.data.token;
 
-const guestCart = JSON.parse(localStorage.getItem("cart") || "[]");
+      const guestCart = JSON.parse(localStorage.getItem("cart") || "[]");
 
-if (guestCart.length > 0) {
-  try {
-    await axios.post(
-      "http://localhost:5000/api/cart/merge",
-      { items: guestCart },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+      if (guestCart.length > 0) {
+        try {
+          await axios.post(
+            "https://thrift-ai-platform.vercel.app/api/cart/merge",
+            { items: guestCart },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
 
-    localStorage.removeItem("cart");
+          localStorage.removeItem("cart");
 
-    window.dispatchEvent(new Event("storage"));
-  } catch (err) {
-    console.error("Cart merge failed", err);
-  }
-}
+          window.dispatchEvent(new Event("storage"));
+        } catch (err) {
+          console.error("Cart merge failed", err);
+        }
+      }
 
       // 🔥 Handle redirect correctly
       const from = location.state?.from?.pathname;

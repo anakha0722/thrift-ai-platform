@@ -12,7 +12,7 @@ function SellerDashboard() {
   const loadProducts = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/products/my-products",
+        "https://thrift-ai-platform.vercel.app/api/products/my-products",
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -32,7 +32,7 @@ function SellerDashboard() {
   const loadBids = async (product) => {
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/bids/${product._id}`
+        `https://thrift-ai-platform.vercel.app/api/bids/${product._id}`
       );
 
       const sorted = (res.data || []).sort(
@@ -55,7 +55,7 @@ function SellerDashboard() {
   const acceptBid = async (productId) => {
     try {
       await axios.post(
-        `http://localhost:5000/api/bids/accept/${productId}`,
+        `https://thrift-ai-platform.vercel.app/api/bids/accept/${productId}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -74,7 +74,7 @@ function SellerDashboard() {
 
     try {
       await axios.delete(
-        `http://localhost:5000/api/products/${productId}`,
+        `https://thrift-ai-platform.vercel.app/api/products/${productId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -120,7 +120,7 @@ function SellerDashboard() {
                 <img
                   src={
                     product.images?.length
-                      ? `http://localhost:5000/uploads/${product.images[0]}`
+                      ? `https://thrift-ai-platform.vercel.app/uploads/${product.images[0]}`
                       : "/placeholder.png"
                   }
                   alt={product.title}

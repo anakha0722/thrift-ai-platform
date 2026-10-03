@@ -9,7 +9,7 @@ function SellerAnalytics() {
     const loadStats = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/orders/seller-analytics",
+          "https://thrift-ai-platform.vercel.app/api/orders/seller-analytics",
           { headers: { Authorization: `Bearer ${token}` } }
         );
 

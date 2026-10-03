@@ -9,7 +9,7 @@ function SellerOrders() {
     const loadOrders = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/orders/seller-orders",
+          "https://thrift-ai-platform.vercel.app/api/orders/seller-orders",
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
@@ -60,7 +60,7 @@ function SellerOrders() {
                   >
                     {item.product.images?.length ? (
                       <img
-                        src={`http://localhost:5000/uploads/${item.product.images[0]}`}
+                        src={`https://thrift-ai-platform.vercel.app/uploads/${item.product.images[0]}`}
                         alt=""
                         className="w-16 h-16 rounded-xl object-cover"
                       />

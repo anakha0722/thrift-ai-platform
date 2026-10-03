@@ -25,7 +25,7 @@ function EditProduct() {
     const loadProduct = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/products/${id}`
+          `https://thrift-ai-platform.vercel.app/api/products/${id}`
         );
 
         setFormData({
@@ -65,7 +65,7 @@ function EditProduct() {
 
     try {
       await axios.put(
-        `http://localhost:5000/api/products/${id}`,
+        `https://thrift-ai-platform.vercel.app/api/products/${id}`,
         formData,
         {
           headers: {

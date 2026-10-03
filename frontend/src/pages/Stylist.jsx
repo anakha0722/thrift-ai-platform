@@ -102,7 +102,7 @@ Mix neutral basics with one standout piece for an effortless look. What vibe are
       ];
 
       const res = await axios.post(
-        "http://localhost:5000/api/products/stylist",
+        "https://thrift-ai-platform.vercel.app/api/products/stylist",
         { messages: formattedMessages },
         { timeout: 20000 }
       );
@@ -207,7 +207,7 @@ Mix neutral basics with one standout piece for an effortless look. What vibe are
                       >
                         {item.images?.length ? (
                           <img
-                            src={`http://localhost:5000/uploads/${item.images[0]}`}
+                            src={`https://thrift-ai-platform.vercel.app/uploads/${item.images[0]}`}
                             alt={item.title}
                             onError={(e) => {
                               if (e.currentTarget.src !== window.location.origin + "/placeholder.png") {
@@ -258,9 +258,8 @@ Mix neutral basics with one standout piece for an effortless look. What vibe are
           <button
             onClick={() => askStylist()}
             disabled={loading}
-            className={`px-6 rounded-full text-white ${
-              loading ? "bg-gray-400 cursor-not-allowed" : "bg-rose"
-            }`}
+            className={`px-6 rounded-full text-white ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-rose"
+              }`}
           >
             {loading ? "Thinking..." : "Send"}
           </button>

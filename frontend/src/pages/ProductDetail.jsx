@@ -27,7 +27,7 @@ function ProductDetail() {
   const loadBids = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/bids/${id}`
+        `https://thrift-ai-platform.vercel.app/api/bids/${id}`
       );
       setBids(res.data || []);
     } catch {
@@ -40,7 +40,7 @@ function ProductDetail() {
     const fetchData = async () => {
       try {
         const productRes = await axios.get(
-          `http://localhost:5000/api/products/${id}`
+          `https://thrift-ai-platform.vercel.app/api/products/${id}`
         );
 
         setProduct(productRes.data);
@@ -49,7 +49,7 @@ function ProductDetail() {
         if (token) {
           try {
             const wishlistRes = await axios.get(
-              "http://localhost:5000/api/wishlist",
+              "https://thrift-ai-platform.vercel.app/api/wishlist",
               { headers: { Authorization: `Bearer ${token}` } }
             );
 
@@ -58,12 +58,12 @@ function ProductDetail() {
             );
 
             setWishlisted(exists);
-          } catch {}
+          } catch { }
         }
 
         try {
           const recRes = await axios.get(
-            `http://localhost:5000/api/products/recommend/${id}`
+            `https://thrift-ai-platform.vercel.app/api/products/recommend/${id}`
           );
           setRecommendations(recRes.data || []);
         } catch {
@@ -99,7 +99,7 @@ function ProductDetail() {
 
     try {
       await axios.post(
-        "http://localhost:5000/api/bids/place",
+        "https://thrift-ai-platform.vercel.app/api/bids/place",
         { productId: id, amount },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -118,103 +118,103 @@ function ProductDetail() {
 
   // ================= ADD TO CART =================
   const handleAddToCart = async () => {
-  console.log("ADD TO CART CLICKED");
+    console.log("ADD TO CART CLICKED");
 
-  if (addingToCart) return;
-  if (!product) return;
+    if (addingToCart) return;
+    if (!product) return;
 
-  if (product.quantity <= 0 || product.isSold) {
-    alert("This product is sold out");
-    return;
-  }
-
-  if (product.seller === userId) {
-    alert("You cannot buy your own item");
-    return;
-  }
-
-  try {
-    setAddingToCart(true);
-
-    // ================= GUEST USER =================
-    if (!token) {
-      const localCart = JSON.parse(localStorage.getItem("cart") || "[]");
-
-      const existingIndex = localCart.findIndex(
-        (item) => item.product._id === product._id
-      );
-
-     if (existingIndex !== -1) {
-  if (localCart[existingIndex].quantity >= product.quantity) {
-    alert("Cannot add more than available stock");
-    return;
-  }
-
-  localCart[existingIndex].quantity += 1;
-} else {
-  if (product.quantity < 1) {
-    alert("Out of stock");
-    return;
-  }
-
-  localCart.push({
-    product,
-    quantity: 1,
-  });
-}
-
-      localStorage.setItem("cart", JSON.stringify(localCart));
-
-      alert("Added to cart");
-
-      window.dispatchEvent(new Event("storage"));
+    if (product.quantity <= 0 || product.isSold) {
+      alert("This product is sold out");
       return;
     }
 
-    // ================= LOGGED IN USER =================
-    const res = await axios.post(
-      "http://localhost:5000/api/cart/add",
-      { productId: product._id },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-
-    alert(res.data?.message || "Added to cart");
-
-    window.dispatchEvent(new Event("storage"));
-
-  } catch (err) {
-    if (err.response?.data?.message) {
-      alert(err.response.data.message);
-    } else {
-      alert("Failed to add to cart");
+    if (product.seller === userId) {
+      alert("You cannot buy your own item");
+      return;
     }
-  } finally {
-    setAddingToCart(false);
-  }
-};
+
+    try {
+      setAddingToCart(true);
+
+      // ================= GUEST USER =================
+      if (!token) {
+        const localCart = JSON.parse(localStorage.getItem("cart") || "[]");
+
+        const existingIndex = localCart.findIndex(
+          (item) => item.product._id === product._id
+        );
+
+        if (existingIndex !== -1) {
+          if (localCart[existingIndex].quantity >= product.quantity) {
+            alert("Cannot add more than available stock");
+            return;
+          }
+
+          localCart[existingIndex].quantity += 1;
+        } else {
+          if (product.quantity < 1) {
+            alert("Out of stock");
+            return;
+          }
+
+          localCart.push({
+            product,
+            quantity: 1,
+          });
+        }
+
+        localStorage.setItem("cart", JSON.stringify(localCart));
+
+        alert("Added to cart");
+
+        window.dispatchEvent(new Event("storage"));
+        return;
+      }
+
+      // ================= LOGGED IN USER =================
+      const res = await axios.post(
+        "https://thrift-ai-platform.vercel.app/api/cart/add",
+        { productId: product._id },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      alert(res.data?.message || "Added to cart");
+
+      window.dispatchEvent(new Event("storage"));
+
+    } catch (err) {
+      if (err.response?.data?.message) {
+        alert(err.response.data.message);
+      } else {
+        alert("Failed to add to cart");
+      }
+    } finally {
+      setAddingToCart(false);
+    }
+  };
   // ================= WISHLIST =================
- const toggleWishlist = async () => {
-  if (!token) {
-    navigate("/login", {
-      state: { from: { pathname: `/product/${id}` } },
-    });
-    return;
-  }
+  const toggleWishlist = async () => {
+    if (!token) {
+      navigate("/login", {
+        state: { from: { pathname: `/product/${id}` } },
+      });
+      return;
+    }
 
-  const url = wishlisted
-    ? "/api/wishlist/remove"
-    : "/api/wishlist/add";
+    const url = wishlisted
+      ? "/api/wishlist/remove"
+      : "/api/wishlist/add";
 
-  try {
-    await axios.post(
-      `http://localhost:5000${url}`,
-      { productId: product._id },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    try {
+      await axios.post(
+        `https://thrift-ai-platform.vercel.app${url}`,
+        { productId: product._id },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-    setWishlisted(!wishlisted);
-  } catch {}
-};
+      setWishlisted(!wishlisted);
+    } catch { }
+  };
 
   if (loading)
     return (
@@ -249,7 +249,7 @@ function ProductDetail() {
           <img
             src={
               product.images?.length
-                ? `http://localhost:5000/uploads/${product.images[imageIndex]}`
+                ? `https://thrift-ai-platform.vercel.app/uploads/${product.images[imageIndex]}`
                 : "/placeholder.png"
             }
             className="w-full rounded-2xl object-cover mb-4"
@@ -261,11 +261,10 @@ function ProductDetail() {
               {product.images.map((img, index) => (
                 <img
                   key={index}
-                  src={`http://localhost:5000/uploads/${img}`}
+                  src={`https://thrift-ai-platform.vercel.app/uploads/${img}`}
                   onClick={() => setImageIndex(index)}
-                  className={`w-16 h-16 object-cover rounded cursor-pointer border ${
-                    imageIndex === index ? "border-rose" : "border-gray-300"
-                  }`}
+                  className={`w-16 h-16 object-cover rounded cursor-pointer border ${imageIndex === index ? "border-rose" : "border-gray-300"
+                    }`}
                   alt=""
                 />
               ))}
@@ -286,8 +285,8 @@ function ProductDetail() {
             {product.title}
           </h1>
           <p className="text-sm text-gray-500 mb-2">
-  Sold by: {product.seller?.name}
-</p>
+            Sold by: {product.seller?.name}
+          </p>
 
           <p className="text-3xl text-rose font-bold mb-3">
             ₹{product.price}
@@ -327,17 +326,16 @@ function ProductDetail() {
               <button
                 onClick={handleAddToCart}
                 disabled={isOutOfStock || addingToCart}
-                className={`px-10 py-4 rounded-full text-white ${
-                  isOutOfStock || addingToCart
+                className={`px-10 py-4 rounded-full text-white ${isOutOfStock || addingToCart
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-rose"
-                }`}
+                  }`}
               >
                 {isOutOfStock
                   ? "Sold Out"
                   : addingToCart
-                  ? "Adding..."
-                  : "Add to Cart"}
+                    ? "Adding..."
+                    : "Add to Cart"}
               </button>
             </>
           )}

@@ -11,7 +11,7 @@ function Cart() {
   const loadCart = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/cart",
+        "https://thrift-ai-platform.vercel.app/api/cart",
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -33,7 +33,7 @@ function Cart() {
   const handleRemove = async (productId) => {
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/cart/remove",
+        "https://thrift-ai-platform.vercel.app/api/cart/remove",
         { productId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -50,7 +50,7 @@ function Cart() {
   const handleCheckout = async () => {
     try {
       await axios.post(
-        "http://localhost:5000/api/orders/checkout",
+        "https://thrift-ai-platform.vercel.app/api/orders/checkout",
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -88,7 +88,7 @@ function Cart() {
               >
                 {item.product.images?.length ? (
                   <img
-                    src={`http://localhost:5000/uploads/${item.product.images[0]}`}
+                    src={`https://thrift-ai-platform.vercel.app/uploads/${item.product.images[0]}`}
                     alt={item.product.title}
                     className="w-24 h-24 rounded-2xl object-cover"
                   />

@@ -23,7 +23,7 @@ function CartDrawer({ open, onClose }) {
 
       // Logged user cart
       const res = await axios.get(
-        "http://localhost:5000/api/cart",
+        "https://thrift-ai-platform.vercel.app/api/cart",
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -63,7 +63,7 @@ function CartDrawer({ open, onClose }) {
       }
 
       const res = await axios.post(
-        "http://localhost:5000/api/cart/remove",
+        "https://thrift-ai-platform.vercel.app/api/cart/remove",
         { productId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -88,7 +88,7 @@ function CartDrawer({ open, onClose }) {
     try {
 
       await axios.post(
-        "http://localhost:5000/api/orders/checkout",
+        "https://thrift-ai-platform.vercel.app/api/orders/checkout",
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -171,7 +171,7 @@ function CartDrawer({ open, onClose }) {
               >
                 {item.product.images?.length > 0 && (
                   <img
-                    src={`http://localhost:5000/uploads/${item.product.images[0]}`}
+                    src={`https://thrift-ai-platform.vercel.app/uploads/${item.product.images[0]}`}
                     className="w-16 h-16 object-cover rounded"
                     alt=""
                   />
