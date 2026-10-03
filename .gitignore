@@ -9,7 +9,7 @@ frontend/.env
 backend/.env
 
 # uploads
-backend/uploads/
+
 
 # build
 dist/
