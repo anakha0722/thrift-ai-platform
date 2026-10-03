@@ -1,10 +1,10 @@
 const express = require("express");
 const Order = require("../models/Order");
 const Cart = require("../models/Cart");
+const Product = require("../models/Product"); // added
 const authMiddleware = require("../middleware/authMiddleware");
 
 const router = express.Router();
-
 
 router.post("/checkout", authMiddleware, async (req, res) => {
   try {
@@ -18,7 +18,9 @@ router.post("/checkout", authMiddleware, async (req, res) => {
     const items = [];
 
     for (const item of cart.items) {
-      const product = item.product;
+
+      // always fetch latest product from DB
+      const product = await Product.findById(item.product._id);
 
       if (!product) {
         return res.status(400).json({
@@ -47,11 +49,11 @@ router.post("/checkout", authMiddleware, async (req, res) => {
         });
       }
 
-      // ✅ Reduce stock
+      // ✅ Reduce stock safely
       product.quantity -= item.quantity;
 
-      // ✅ If stock becomes 0 → mark sold
-      if (product.quantity === 0) {
+      if (product.quantity <= 0) {
+        product.quantity = 0;
         product.isSold = true;
       }
 
@@ -73,14 +75,18 @@ router.post("/checkout", authMiddleware, async (req, res) => {
       user: req.user._id,
       items,
       totalAmount,
-      status: "Placed",
+      status: "Awaiting Confirmation",
     });
 
     // clear cart
     cart.items = [];
     await cart.save();
 
-    res.json(order);
+    res.json({
+      message: "Order placed successfully",
+      order
+    });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Checkout failed" });
@@ -94,7 +100,13 @@ router.post("/checkout", authMiddleware, async (req, res) => {
 router.get("/my-orders", authMiddleware, async (req, res) => {
   try {
     const orders = await Order.find({ user: req.user._id })
-      .populate("items.product")
+      .populate({
+  path: "items.product",
+  populate: {
+    path: "seller",
+    select: "name email"
+  }
+})
       .sort({ createdAt: -1 });
 
     res.json(orders);
@@ -104,12 +116,10 @@ router.get("/my-orders", authMiddleware, async (req, res) => {
 });
 
 
-// =======================
-// CANCEL ORDER
-// =======================
 router.put("/cancel/:id", authMiddleware, async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findById(req.params.id)
+      .populate("items.product");
 
     if (!order)
       return res.status(404).json({ message: "Order not found" });
@@ -118,15 +128,39 @@ router.put("/cancel/:id", authMiddleware, async (req, res) => {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
+    // prevent cancelling twice
+    if (order.status === "Cancelled") {
+      return res.status(400).json({ message: "Order already cancelled" });
+    }
+
+    // restore product stock
+    for (const item of order.items) {
+
+      if (!item.product) continue;
+
+      const product = await Product.findById(item.product._id);
+
+      if (!product) continue;
+
+      product.quantity += item.quantity;
+
+      if (product.quantity > 0) {
+        product.isSold = false;
+      }
+
+      await product.save();
+    }
+
     order.status = "Cancelled";
     await order.save();
 
     res.json(order);
-  } catch {
+
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Cancel failed" });
   }
 });
-
 
 // =======================
 // SELLER ORDERS
@@ -198,7 +232,6 @@ router.put("/update-status/:id", authMiddleware, async (req, res) => {
   }
 });
 
-
 // =======================
 // SELLER ANALYTICS
 // =======================
@@ -214,11 +247,22 @@ router.get("/seller-analytics", authMiddleware, async (req, res) => {
 
     let totalRevenue = 0;
     let totalItemsSold = 0;
+    let totalOrders = 0;
+
     const productSales = {};
 
     orders.forEach((order) => {
-      order.items.forEach((item) => {
-        if (!item.product) return;
+
+      const sellerItems = order.items.filter(
+        (item) => item.product !== null
+      );
+
+      // skip orders that don't contain this seller's items
+      if (sellerItems.length === 0) return;
+
+      totalOrders += 1;
+
+      sellerItems.forEach((item) => {
 
         const revenue = item.price * item.quantity;
 
@@ -235,7 +279,9 @@ router.get("/seller-analytics", authMiddleware, async (req, res) => {
         }
 
         productSales[id].quantity += item.quantity;
+
       });
+
     });
 
     const topProducts = Object.values(productSales)
@@ -245,14 +291,14 @@ router.get("/seller-analytics", authMiddleware, async (req, res) => {
     res.json({
       totalRevenue,
       totalItemsSold,
-      totalOrders: orders.length,
+      totalOrders,
       topProducts,
     });
+
   } catch {
     res.status(500).json({ message: "Analytics failed" });
   }
 });
-
 // =======================
 // CONFIRM ORDER (BUYER)
 // =======================
@@ -265,7 +311,6 @@ router.put("/confirm/:id", authMiddleware, async (req, res) => {
     if (!order)
       return res.status(404).json({ message: "Order not found" });
 
-    // Only buyer can confirm
     if (order.user.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "Unauthorized" });
     }

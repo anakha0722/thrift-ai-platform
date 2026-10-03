@@ -1,14 +1,20 @@
 import { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 function Register() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const searchParams = new URLSearchParams(location.search);
+  const isJoinSeller =
+    searchParams.get("role") === "seller" ||
+    location.state?.fromSeller;
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("buyer"); // 1️⃣ role
+  const [role, setRole] = useState(isJoinSeller ? "seller" : "buyer"); // 1️⃣ role
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -26,9 +32,18 @@ function Register() {
 
       // 2️⃣ AUTO LOGIN AFTER SIGNUP
       localStorage.setItem("token", res.data.token);
+      if (res.data.user) {
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+      }
 
-      // redirect to buy page
-      navigate("/buy");
+      window.dispatchEvent(new Event("storage"));
+
+      // redirect based on flow
+      if (isJoinSeller || role === "seller") {
+        navigate("/sell", { replace: true });
+      } else {
+        navigate("/buy", { replace: true });
+      }
     } catch (err) {
       setError("Registration failed. Try again.");
     } finally {
@@ -125,7 +140,11 @@ function Register() {
         <p className="text-center text-sm text-cocoa/60 mt-8">
           Already have an account?{" "}
           <span
-            onClick={() => navigate("/login")}
+            onClick={() =>
+              navigate(isJoinSeller ? "/login?role=seller" : "/login", {
+                state: isJoinSeller ? { fromSeller: true } : undefined,
+              })
+            }
             className="text-rose cursor-pointer hover:underline"
           >
             Login

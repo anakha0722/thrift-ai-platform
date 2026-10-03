@@ -5,6 +5,7 @@ import Hero from "../components/Hero";
 
 function Buy() {
   const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
   const [wishlistIds, setWishlistIds] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
 
@@ -20,6 +21,7 @@ function Buy() {
   const [size, setSize] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [sort, setSort] = useState("");
+  const [addingId, setAddingId] = useState(null);
 
   // ================= LOAD WISHLIST =================
   useEffect(() => {
@@ -56,13 +58,20 @@ function Buy() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
+
+        setLoadingProducts(true);
+
         const res = await axios.get(
           "http://localhost:5000/api/products"
         );
+
         setProducts(res.data || []);
         setFilteredProducts(res.data || []);
+
       } catch (err) {
         console.error("Product load error:", err);
+      } finally {
+        setLoadingProducts(false);
       }
     };
 
@@ -101,6 +110,9 @@ function Buy() {
 
   // ================= ADD TO CART =================
   const handleAddToCart = async (product) => {
+
+    if (addingId === product._id) return;
+
     if (product.quantity <= 0 || product.isSold) {
       alert("This product is sold out");
       return;
@@ -111,36 +123,112 @@ function Buy() {
       return;
     }
 
-    if (!token) {
-      const localCart = JSON.parse(localStorage.getItem("cart") || "[]");
-      const existing = localCart.find(i => i.product._id === product._id);
+    setAddingId(product._id);
 
-      if (existing) existing.quantity += 1;
-      else localCart.push({ product, quantity: 1 });
+    // ================= LOCAL CART =================
+    if (!token) {
+
+      const localCart = JSON.parse(localStorage.getItem("cart") || "[]");
+
+      const existing = localCart.find(
+        i => i.product._id === product._id
+      );
+
+      if (existing) {
+
+        const newQty = existing.quantity + 1;
+
+        if (newQty > product.quantity) {
+          alert(`Only ${product.quantity} item(s) available in stock`);
+          setAddingId(null);
+          return;
+        }
+
+        existing.quantity = newQty;
+
+      } else {
+
+        if (product.quantity < 1) {
+          alert("Item out of stock");
+          setAddingId(null);
+          return;
+        }
+
+        localCart.push({
+          product,
+          quantity: 1
+        });
+
+      }
 
       localStorage.setItem("cart", JSON.stringify(localCart));
       window.dispatchEvent(new Event("storage"));
+
       alert("Added to cart");
+
+      setAddingId(null);
       return;
     }
 
-    try {
-      await axios.post(
-        "http://localhost:5000/api/cart/add",
-        { productId: product._id },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      alert("Added to cart");
-    } catch (err) {
-      console.error("Cart error:", err);
+// ================= SERVER CART =================
+try {
+
+  const res = await axios.post(
+    "http://localhost:5000/api/cart/add",
+    { productId: product._id },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+
+  alert(res.data?.message || "Added to cart");
+
+} catch (err) {
+
+  if (err.response?.data?.message) {
+    alert(err.response.data.message);
+  } else {
+    alert("Failed to add to cart");
+  }
+
+  console.error("Cart error:", err);
+}
+
+setAddingId(null);
+  };
+
+  const getProductImage = (product) => {
+    const rawImage =
+      Array.isArray(product?.images) && product.images.length > 0
+        ? product.images[0]
+        : (product?.image || "");
+
+    if (!rawImage || typeof rawImage !== "string") {
+      return "/placeholder.png";
     }
+
+    if (
+      rawImage.startsWith("http://") ||
+      rawImage.startsWith("https://") ||
+      rawImage.startsWith("data:")
+    ) {
+      return rawImage;
+    }
+
+    const cleanPath = rawImage
+      .replace(/\\/g, "/")
+      .replace(/^(\/)?uploads\//, "")
+      .replace(/^\/+/, "");
+
+    return `http://localhost:5000/uploads/${cleanPath}`;
   };
 
   return (
     <div className="bg-cream min-h-screen text-cocoa">
       <Hero />
 
-      <div className="max-w-7xl mx-auto px-6 py-12 flex gap-10">
+      <div
+  id="products"
+  className="max-w-7xl mx-auto px-6 py-12 flex gap-10"
+>
 
         {/* FILTER SIDEBAR */}
         <div className="w-64 space-y-6">
@@ -195,7 +283,35 @@ function Buy() {
 
         {/* PRODUCT GRID */}
         <div className="flex-1">
+
+          {/* 🔥 SEARCH BAR */}
+          <input
+            type="text"
+            placeholder="Search products..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full p-3 mb-4 border rounded-full bg-white"
+          />
+
+          {!loadingProducts && (
+            <p className="mb-4 text-sm text-cocoa/70">
+              {filteredProducts.length} item{filteredProducts.length !== 1 ? "s" : ""} found
+            </p>
+          )}
+
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+
+            {filteredProducts.length === 0 && (
+              <div className="col-span-full text-center py-20 text-cocoa/60">
+                <h2 className="text-2xl font-semibold mb-2">
+                  No products found 👀
+                </h2>
+                <p>
+                  Try changing your filters or search keywords.
+                </p>
+              </div>
+            )}
+
             {filteredProducts.map(product => {
               const isOutOfStock =
                 product.quantity <= 0 || product.isSold;
@@ -216,11 +332,12 @@ function Buy() {
                   )}
 
                   <img
-                    src={
-                      product.images?.length
-                        ? `http://localhost:5000/uploads/${product.images[0]}`
-                        : "/placeholder.png"
-                    }
+                    src={getProductImage(product)}
+                    onError={(e) => {
+                      if (e.currentTarget.src !== window.location.origin + "/placeholder.png") {
+                        e.currentTarget.src = "/placeholder.png";
+                      }
+                    }}
                     className={`w-full h-60 object-cover ${
                       isOutOfStock ? "opacity-60" : ""
                     }`}
@@ -238,19 +355,24 @@ function Buy() {
                       e.stopPropagation();
                       handleAddToCart(product);
                     }}
-                    disabled={isOutOfStock}
+                    disabled={isOutOfStock || addingId === product._id}
                     className={`w-full py-3 text-white ${
-                      isOutOfStock
+                      isOutOfStock || addingId === product._id
                         ? "bg-gray-400 cursor-not-allowed"
                         : "bg-rose"
                     }`}
                   >
-                    {isOutOfStock ? "Sold Out" : "Add to Cart"}
+                    {isOutOfStock
+                      ? "Sold Out"
+                      : addingId === product._id
+                      ? "Adding..."
+                      : "Add to Cart"}
                   </button>
 
                 </div>
               );
             })}
+
           </div>
         </div>
 

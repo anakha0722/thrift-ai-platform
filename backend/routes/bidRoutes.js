@@ -42,7 +42,7 @@ router.post("/place", authMiddleware, async (req, res) => {
     if (!product)
       return res.status(404).json({ message: "Product not found" });
 
-    if (product.isSold)
+    if (product.isSold || product.quantity <= 0)
       return res.status(400).json({
         message: "Product already sold",
       });
@@ -79,12 +79,18 @@ router.post("/place", authMiddleware, async (req, res) => {
     product.highestBid = amount;
     await product.save();
 
-    res.json(bid);
+    res.json({
+      message: "Bid placed successfully",
+      bid,
+      highestBid: amount
+    });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Bid failed" });
   }
 });
+
 // ======================
 // SELLER ACCEPTS BID
 // ======================
@@ -128,27 +134,30 @@ router.post("/accept/:productId", authMiddleware, async (req, res) => {
 
     // ✅ Create order
     const order = await Order.create({
-  user: highestBid.bidder._id,
-  items: [
-    {
-      product: product._id,
-      quantity: 1,
-      price: highestBid.amount,
-    },
-  ],
-  totalAmount: highestBid.amount,
-  status: "Awaiting Confirmation", // 🔥 important
-});
+      user: highestBid.bidder._id,
+      items: [
+        {
+          product: product._id,
+          quantity: 1,
+          price: highestBid.amount,
+        },
+      ],
+      totalAmount: highestBid.amount,
+      status: "Awaiting Confirmation",
+    });
 
     // ✅ Mark product sold
-product.isSold = true;
-product.selectedBidder = highestBid.bidder._id;
-product.quantity = 0; // 🔥 Important fix
-await product.save();
+    product.isSold = true;
+    product.selectedBidder = highestBid.bidder._id;
+    product.quantity = 0;
+
+    await product.save();
+
     res.json({
       message: "Bid accepted successfully",
       order,
     });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Accept failed" });

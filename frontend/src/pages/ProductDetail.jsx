@@ -21,6 +21,8 @@ function ProductDetail() {
   const [bids, setBids] = useState([]);
   const [bidAmount, setBidAmount] = useState("");
 
+  const [addingToCart, setAddingToCart] = useState(false);
+
   // ================= LOAD BIDS =================
   const loadBids = async () => {
     try {
@@ -44,7 +46,6 @@ function ProductDetail() {
         setProduct(productRes.data);
         setImageIndex(0);
 
-        // Only fetch wishlist if logged in
         if (token) {
           try {
             const wishlistRes = await axios.get(
@@ -60,7 +61,6 @@ function ProductDetail() {
           } catch {}
         }
 
-        // Recommendations
         try {
           const recRes = await axios.get(
             `http://localhost:5000/api/products/recommend/${id}`
@@ -118,54 +118,103 @@ function ProductDetail() {
 
   // ================= ADD TO CART =================
   const handleAddToCart = async () => {
+  console.log("ADD TO CART CLICKED");
+
+  if (addingToCart) return;
+  if (!product) return;
+
+  if (product.quantity <= 0 || product.isSold) {
+    alert("This product is sold out");
+    return;
+  }
+
+  if (product.seller === userId) {
+    alert("You cannot buy your own item");
+    return;
+  }
+
+  try {
+    setAddingToCart(true);
+
+    // ================= GUEST USER =================
     if (!token) {
-      navigate("/login", {
-        state: { from: { pathname: `/product/${id}` } },
-      });
-      return;
-    }
+      const localCart = JSON.parse(localStorage.getItem("cart") || "[]");
 
-    if (product.seller === userId) {
-      alert("You cannot buy your own item");
-      return;
-    }
-
-    try {
-      await axios.post(
-        "http://localhost:5000/api/cart/add",
-        { productId: product._id },
-        { headers: { Authorization: `Bearer ${token}` } }
+      const existingIndex = localCart.findIndex(
+        (item) => item.product._id === product._id
       );
+
+     if (existingIndex !== -1) {
+  if (localCart[existingIndex].quantity >= product.quantity) {
+    alert("Cannot add more than available stock");
+    return;
+  }
+
+  localCart[existingIndex].quantity += 1;
+} else {
+  if (product.quantity < 1) {
+    alert("Out of stock");
+    return;
+  }
+
+  localCart.push({
+    product,
+    quantity: 1,
+  });
+}
+
+      localStorage.setItem("cart", JSON.stringify(localCart));
+
+      alert("Added to cart");
 
       window.dispatchEvent(new Event("storage"));
-    } catch {
-      alert("Failed to add to cart");
-    }
-  };
-
-  // ================= WISHLIST =================
-  const toggleWishlist = async () => {
-    if (!token) {
-      navigate("/login", {
-        state: { from: { pathname: `/product/${id}` } },
-      });
       return;
     }
 
-    const url = wishlisted
-      ? "/api/wishlist/remove"
-      : "/api/wishlist/add";
+    // ================= LOGGED IN USER =================
+    const res = await axios.post(
+      "http://localhost:5000/api/cart/add",
+      { productId: product._id },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-    try {
-      await axios.post(
-        `http://localhost:5000${url}`,
-        { productId: product._id },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+    alert(res.data?.message || "Added to cart");
 
-      setWishlisted(!wishlisted);
-    } catch {}
-  };
+    window.dispatchEvent(new Event("storage"));
+
+  } catch (err) {
+    if (err.response?.data?.message) {
+      alert(err.response.data.message);
+    } else {
+      alert("Failed to add to cart");
+    }
+  } finally {
+    setAddingToCart(false);
+  }
+};
+  // ================= WISHLIST =================
+ const toggleWishlist = async () => {
+  if (!token) {
+    navigate("/login", {
+      state: { from: { pathname: `/product/${id}` } },
+    });
+    return;
+  }
+
+  const url = wishlisted
+    ? "/api/wishlist/remove"
+    : "/api/wishlist/add";
+
+  try {
+    await axios.post(
+      `http://localhost:5000${url}`,
+      { productId: product._id },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    setWishlisted(!wishlisted);
+  } catch {}
+};
 
   if (loading)
     return (
@@ -188,6 +237,7 @@ function ProductDetail() {
     );
 
   const isSeller = product.seller === userId;
+  const isOutOfStock = product.quantity <= 0 || product.isSold;
 
   return (
     <div className="min-h-screen bg-cream px-6 py-24">
@@ -202,9 +252,25 @@ function ProductDetail() {
                 ? `http://localhost:5000/uploads/${product.images[imageIndex]}`
                 : "/placeholder.png"
             }
-            className="w-full rounded-2xl object-cover"
+            className="w-full rounded-2xl object-cover mb-4"
             alt=""
           />
+
+          {product.images?.length > 1 && (
+            <div className="flex gap-3">
+              {product.images.map((img, index) => (
+                <img
+                  key={index}
+                  src={`http://localhost:5000/uploads/${img}`}
+                  onClick={() => setImageIndex(index)}
+                  className={`w-16 h-16 object-cover rounded cursor-pointer border ${
+                    imageIndex === index ? "border-rose" : "border-gray-300"
+                  }`}
+                  alt=""
+                />
+              ))}
+            </div>
+          )}
 
           <button
             onClick={toggleWishlist}
@@ -219,6 +285,9 @@ function ProductDetail() {
           <h1 className="text-4xl font-bold mb-4">
             {product.title}
           </h1>
+          <p className="text-sm text-gray-500 mb-2">
+  Sold by: {product.seller?.name}
+</p>
 
           <p className="text-3xl text-rose font-bold mb-3">
             ₹{product.price}
@@ -257,9 +326,18 @@ function ProductDetail() {
 
               <button
                 onClick={handleAddToCart}
-                className="px-10 py-4 rounded-full bg-rose text-white"
+                disabled={isOutOfStock || addingToCart}
+                className={`px-10 py-4 rounded-full text-white ${
+                  isOutOfStock || addingToCart
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-rose"
+                }`}
               >
-                Add to Cart
+                {isOutOfStock
+                  ? "Sold Out"
+                  : addingToCart
+                  ? "Adding..."
+                  : "Add to Cart"}
               </button>
             </>
           )}

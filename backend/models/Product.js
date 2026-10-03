@@ -45,8 +45,15 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
 
+    // ✅ ADD THIS FIELD
+    quantity: {
+      type: Number,
+      required: true,
+      default: 1,
+    },
+
     // ===============================
-    // ✅ BIDDING SYSTEM
+    // BIDDING SYSTEM
     // ===============================
 
     biddingEnabled: {

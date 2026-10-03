@@ -60,7 +60,7 @@ function Layout() {
           <Route path="/" element={<Navigate to="/buy" replace />} />
           <Route path="/buy" element={<Buy />} />
           <Route path="/product/:id" element={<ProductDetail />} />
-          <Route path="/cart" element={<Cart />} />
+          
 
           {/* ================= LOGIN REQUIRED ================= */}
           <Route

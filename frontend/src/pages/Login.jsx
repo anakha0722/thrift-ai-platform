@@ -6,6 +6,12 @@ function Login() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const searchParams = new URLSearchParams(location.search);
+  const isJoinSeller =
+    searchParams.get("role") === "seller" ||
+    location.state?.fromSeller ||
+    location.state?.from?.pathname === "/sell";
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -32,11 +38,33 @@ function Login() {
       );
 
       const user = res.data.user;
+      // ================= MERGE CART =================
+const token = res.data.token;
+
+const guestCart = JSON.parse(localStorage.getItem("cart") || "[]");
+
+if (guestCart.length > 0) {
+  try {
+    await axios.post(
+      "http://localhost:5000/api/cart/merge",
+      { items: guestCart },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    localStorage.removeItem("cart");
+
+    window.dispatchEvent(new Event("storage"));
+  } catch (err) {
+    console.error("Cart merge failed", err);
+  }
+}
 
       // 🔥 Handle redirect correctly
       const from = location.state?.from?.pathname;
 
-      if (from) {
+      if (isJoinSeller) {
+        navigate("/sell", { replace: true });
+      } else if (from) {
         navigate(from, { replace: true });
       } else {
         // Default redirect based on role
@@ -113,7 +141,11 @@ function Login() {
         <p className="text-center text-sm text-cocoa/60 mt-8">
           New here?{" "}
           <span
-            onClick={() => navigate("/register")}
+            onClick={() =>
+              navigate(isJoinSeller ? "/register?role=seller" : "/register", {
+                state: isJoinSeller ? { fromSeller: true } : undefined,
+              })
+            }
             className="text-rose cursor-pointer hover:underline"
           >
             Create an account

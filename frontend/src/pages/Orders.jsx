@@ -46,6 +46,21 @@ function Orders() {
     }
   };
 
+  // ✅ NEW: Cancel order
+  const handleCancel = async (orderId) => {
+    try {
+      await axios.put(
+        `http://localhost:5000/api/orders/cancel/${orderId}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      loadOrders();
+    } catch (err) {
+      alert(err.response?.data?.message || "Cancel failed");
+    }
+  };
+
   const getProgressIndex = (status) =>
     Math.max(steps.indexOf(status), 0);
 
@@ -143,6 +158,13 @@ function Orders() {
                             {item.product.title}
                           </p>
                           <p className="text-sm text-cocoa/60">
+  Sold by: {item.product.seller?.name}
+</p>
+
+<p className="text-sm text-cocoa/60">
+  Contact: {item.product.seller?.email}
+</p>
+                          <p className="text-sm text-cocoa/60">
                             Qty: {item.quantity}
                           </p>
                         </div>
@@ -164,14 +186,26 @@ function Orders() {
                       {order.status}
                     </span>
 
-                    {order.status === "Awaiting Confirmation" && (
-                      <button
-                        onClick={() => setConfirmingOrder(order._id)}
-                        className="bg-rose text-white px-4 py-2 rounded-full text-sm"
-                      >
-                        Complete Purchase
-                      </button>
-                    )}
+                    <div className="flex gap-2">
+                      {order.status === "Awaiting Confirmation" && (
+                        <button
+                          onClick={() => setConfirmingOrder(order._id)}
+                          className="bg-rose text-white px-4 py-2 rounded-full text-sm"
+                        >
+                          Complete Purchase
+                        </button>
+                      )}
+
+                      {(order.status === "Awaiting Confirmation" ||
+                        order.status === "Placed") && (
+                        <button
+                          onClick={() => handleCancel(order._id)}
+                          className="bg-red-500 text-white px-4 py-2 rounded-full text-sm"
+                        >
+                          Cancel Order
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Confirmation Form */}

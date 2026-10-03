@@ -25,11 +25,24 @@ router.post("/add", auth, async (req, res) => {
     (i) => i.product.toString() === productId
   );
 
-  if (!exists)
-    wishlist.items.push({ product: productId });
+  if (exists) {
+    return res.json({
+      message: "Item already in wishlist",
+      wishlist
+    });
+  }
+
+  wishlist.items.push({ product: productId });
 
   await wishlist.save();
-  res.json(wishlist);
+
+  const updated = await Wishlist.findOne({ user: req.user.id })
+    .populate("items.product");
+
+  res.json({
+    message: "Added to wishlist",
+    wishlist: updated
+  });
 });
 
 router.post("/remove", auth, async (req, res) => {
@@ -42,7 +55,14 @@ router.post("/remove", auth, async (req, res) => {
   );
 
   await wishlist.save();
-  res.json(wishlist);
+
+  const updated = await Wishlist.findOne({ user: req.user.id })
+    .populate("items.product");
+
+  res.json({
+    message: "Removed from wishlist",
+    wishlist: updated
+  });
 });
 
 module.exports = router;

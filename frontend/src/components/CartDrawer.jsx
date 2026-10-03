@@ -14,14 +14,14 @@ function CartDrawer({ open, onClose }) {
     try {
       setLoading(true);
 
-      // ✅ Guest cart from localStorage
+      // Guest cart
       if (!token) {
         const localCart = JSON.parse(localStorage.getItem("cart") || "[]");
         setItems(localCart);
         return;
       }
 
-      // ✅ Logged user cart from backend
+      // Logged user cart
       const res = await axios.get(
         "http://localhost:5000/api/cart",
         { headers: { Authorization: `Bearer ${token}` } }
@@ -51,11 +51,14 @@ function CartDrawer({ open, onClose }) {
     try {
       if (!token) {
         const localCart = JSON.parse(localStorage.getItem("cart") || "[]");
+
         const updated = localCart.filter(
           (item) => item.product._id !== productId
         );
+
         localStorage.setItem("cart", JSON.stringify(updated));
         setItems(updated);
+
         return;
       }
 
@@ -65,15 +68,17 @@ function CartDrawer({ open, onClose }) {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      setItems(res.data.items || []);
+      // ✅ FIX: backend returns cart.items
+      setItems(res.data.cart?.items || []);
+
     } catch (err) {
       console.error(err);
     }
   };
 
-  // ✅ CHECKOUT FIXED
+  // CHECKOUT
   const checkout = async () => {
-    // 🔴 Force login
+
     if (!token) {
       alert("Please login to proceed to checkout.");
       navigate("/login");
@@ -81,6 +86,7 @@ function CartDrawer({ open, onClose }) {
     }
 
     try {
+
       await axios.post(
         "http://localhost:5000/api/orders/checkout",
         {},
@@ -89,11 +95,24 @@ function CartDrawer({ open, onClose }) {
 
       setItems([]);
       localStorage.removeItem("cart");
-      alert("Order placed successfully!");
+
+      // ✅ NEW: trigger global refresh
+      window.dispatchEvent(new Event("storage"));
+
       onClose();
+      navigate("/orders");
+
+      onClose();
+
     } catch (err) {
       console.error(err);
-      alert("Checkout failed");
+
+      if (err.response?.data?.message) {
+        alert(err.response.data.message);
+      } else {
+        alert("Checkout failed");
+      }
+
     }
   };
 

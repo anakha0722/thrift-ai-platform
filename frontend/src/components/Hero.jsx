@@ -1,10 +1,14 @@
+import { useNavigate } from "react-router-dom";
+
 function Hero() {
-  const scrollToProducts = () => {
-    const section = document.getElementById("featured-products");
-    if (section) {
-      section.scrollIntoView({ behavior: "smooth" });
-    }
-  };
+  const navigate = useNavigate();
+
+  const goToShop = () => {
+  const section = document.getElementById("products");
+  if (section) {
+    section.scrollIntoView({ behavior: "smooth" });
+  }
+};
 
   return (
     <section
@@ -16,7 +20,7 @@ function Hero() {
       }}
     >
       {/* Overlay */}
-      <div className="absolute inset-0 bg-black/50" />
+      <div className="absolute inset-0 bg-black/50 pointer-events-none" />
 
       {/* Content */}
       <div className="relative text-white px-6 max-w-2xl">
@@ -31,14 +35,14 @@ function Hero() {
 
         <div className="flex justify-center gap-6 flex-wrap">
           <button
-            onClick={scrollToProducts}
+            onClick={goToShop}
             className="px-8 py-3 bg-rose rounded-full hover:opacity-90"
           >
             Shop Now
           </button>
 
           <button
-            onClick={() => (window.location.href = "/sell")}
+            onClick={() => navigate("/sell")}
             className="px-8 py-3 border border-white rounded-full hover:bg-white hover:text-black transition"
           >
             Sell Clothes

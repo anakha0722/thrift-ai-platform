@@ -66,6 +66,7 @@ function Navbar() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("stylist_chat");
     setUser(null);
     navigate("/buy", { replace: true });
   };

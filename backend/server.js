@@ -13,6 +13,11 @@ const cartRoutes = require("./routes/cartRoutes");
 const wishlistRoutes = require("./routes/wishlistRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const bidRoutes = require("./routes/bidRoutes");
+console.log("authRoutes:", typeof authRoutes);
+console.log("productRoutes:", typeof productRoutes);
+console.log("cartRoutes:", typeof cartRoutes);
+console.log("wishlistRoutes:", typeof wishlistRoutes);
+console.log("orderRoutes:", typeof orderRoutes);
 // =======================
 // APP INIT
 // =======================
