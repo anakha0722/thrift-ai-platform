@@ -10,17 +10,21 @@ require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 const router = express.Router();
 
 
-// =======================
-// MULTER CONFIG
-// =======================
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, "..", "uploads"));
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname);
-  },
+// ======================
+// CLOUDINARY CONFIG
+// ======================
+const { v2: cloudinary } = require("cloudinary");
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
+// ======================
+// MULTER CONFIG
+// ======================
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,
@@ -32,8 +36,6 @@ const upload = multer({
     cb(null, true);
   },
 });
-
-
 // =======================
 // UPLOAD PRODUCT
 // =======================
@@ -58,6 +60,29 @@ router.post(
         return res.status(400).json({ message: "Missing fields" });
       }
 
+      if (!req.file) {
+        return res.status(400).json({ message: "Image is required" });
+      }
+
+      // Upload image to Cloudinary
+      const cloudinaryResult = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder: "rewear/products",
+            resource_type: "image",
+          },
+          (error, result) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve(result);
+            }
+          }
+        );
+
+        stream.end(req.file.buffer);
+      });
+
       const product = await Product.create({
         title,
         description,
@@ -68,14 +93,17 @@ router.post(
         quantity: quantity ? Number(quantity) : 1,
         biddingEnabled: biddingEnabled === "true",
         isSold: false,
-        images: req.file ? [req.file.filename] : [],
+        images: [cloudinaryResult.secure_url],
         seller: req.user._id,
       });
 
       res.status(201).json(product);
     } catch (error) {
       console.error("UPLOAD ERROR:", error);
-      res.status(500).json({ message: "Upload failed" });
+      res.status(500).json({
+        message: "Upload failed",
+        error: error.message,
+      });
     }
   }
 );
@@ -355,12 +383,12 @@ router.post("/stylist", async (req, res) => {
     // Build product context for the AI prompt
     const productContext = recommendedProducts.length > 0
       ? `Curated ReWear thrift pieces selected for this look from our store:\n` +
-        recommendedProducts
-          .map(
-            (p) =>
-              `- ${p.title} (${p.category}${p.description ? ": " + p.description : ""}, ₹${p.price})`
-          )
-          .join("\n")
+      recommendedProducts
+        .map(
+          (p) =>
+            `- ${p.title} (${p.category}${p.description ? ": " + p.description : ""}, ₹${p.price})`
+        )
+        .join("\n")
       : "";
 
     const systemPrompt = `You are a friendly, trendy Gen Z fashion stylist for an online thrift platform called ReWear.
@@ -510,7 +538,7 @@ router.delete("/:id", authMiddleware, async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
-  .populate("seller", "name email");
+      .populate("seller", "name email");
 
     if (!product)
       return res.status(404).json({ message: "Not found" });
